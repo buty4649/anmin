@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "io/ioutil"
     "os"
     "os/signal"
     "syscall"
@@ -24,7 +25,7 @@ func main() {
     go func() {
         ticker := time.NewTicker(1 * time.Second)
 
-        if err:= printLux(t); err != nil {
+        if err:= exec(t); err != nil {
             panic(err)
             fin <- true
         }
@@ -36,7 +37,7 @@ func main() {
                 return
 
             case <-ticker.C:
-                if err:= printLux(t); err != nil {
+                if err:= exec(t); err != nil {
                     panic(err)
                     fin <- true
                 }
@@ -49,11 +50,34 @@ func main() {
     os.Exit(0)
 }
 
-func printLux(t *tsl256x.TSL256X) error{
+func exec(t *tsl256x.TSL256X) error{
     lux, err := t.ReadLux()
     if err != nil {
         return err
     }
-    fmt.Printf("%.1f\n", lux)
+
+    if lux > 30 {
+        updateLEDStatus(0, "0",   "mmc0")
+        updateLEDStatus(1, "255", "input")
+    } else {
+        updateLEDStatus(0, "0", "none")
+        updateLEDStatus(1, "0", "none")
+    }
+    return nil
+}
+
+func updateLEDStatus(number int, brightness string, trigger string) error {
+    base_path := fmt.Sprintf("/sys/class/leds/led%d/", number)
+
+    err := ioutil.WriteFile(base_path + "brightness", []byte(brightness), os.ModePerm)
+    if err != nil{
+        return err
+    }
+
+    err = ioutil.WriteFile(base_path + "trigger", []byte(trigger), os.ModePerm)
+    if err != nil{
+        return err
+    }
+
     return nil
 }
