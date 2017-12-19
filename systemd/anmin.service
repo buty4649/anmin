@@ -2,7 +2,7 @@
 Description = anmin
 
 [Service]
-ExecStart = /usr/local/sbin/anmin
+ExecStart = /usr/local/sbin/anmin -q
 Restart = always
 Type = simple
 
