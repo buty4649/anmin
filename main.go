@@ -12,6 +12,8 @@ import (
     "github.com/buty4649/anmin/driver"
 )
 
+const VERSION = "1.0.0"
+
 type Config struct {
     Threshold float64
     Quiet     bool
@@ -19,10 +21,17 @@ type Config struct {
 
 func main() {
     config := Config{}
+    var showVersion bool
 
     flag.Float64Var(&config.Threshold, "t", 10.0,  "Threshold to turn off the LED")
-    flag.BoolVar(&config.Quiet,    "q", false, "Quiet mode")
+    flag.BoolVar(&config.Quiet, "q", false, "Quiet mode")
+    flag.BoolVar(&showVersion,  "v", false, "Show version and exit")
     flag.Parse()
+
+    if showVersion {
+        fmt.Printf("anmin version %s\n", VERSION)
+        os.Exit(0)
+    }
 
     t, err := tsl256x.Open("/dev/i2c-1")
     if err != nil {
