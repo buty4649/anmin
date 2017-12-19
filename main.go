@@ -1,6 +1,7 @@
 package main
 
 import (
+    "flag"
     "fmt"
     "io/ioutil"
     "os"
@@ -11,7 +12,17 @@ import (
     "github.com/buty4649/anmin/driver"
 )
 
+type Config struct {
+    Threshold float64
+    Quiet     bool
+}
+
 func main() {
+    config := Config{}
+
+    flag.Float64Var(&config.Threshold, "t", 10.0,  "Threshold to turn off the LED")
+    flag.BoolVar(&config.Quiet,    "q", false, "Quiet mode")
+    flag.Parse()
 
     t, err := tsl256x.Open("/dev/i2c-1")
     if err != nil {
@@ -25,7 +36,7 @@ func main() {
     go func() {
         ticker := time.NewTicker(1 * time.Second)
 
-        if err:= exec(t); err != nil {
+        if err:= exec(t, &config); err != nil {
             panic(err)
             fin <- true
         }
@@ -37,7 +48,7 @@ func main() {
                 return
 
             case <-ticker.C:
-                if err:= exec(t); err != nil {
+                if err:= exec(t, &config); err != nil {
                     panic(err)
                     fin <- true
                 }
@@ -50,13 +61,17 @@ func main() {
     os.Exit(0)
 }
 
-func exec(t *tsl256x.TSL256X) error{
+func exec(t *tsl256x.TSL256X,c *Config) error{
     lux, err := t.ReadLux()
     if err != nil {
         return err
     }
 
-    if lux > 30 {
+    if ! c.Quiet {
+        fmt.Printf("%.2f\n", lux)
+    }
+
+    if lux > c.Threshold {
         updateLEDStatus(0, "0",   "mmc0")
         updateLEDStatus(1, "255", "input")
     } else {
